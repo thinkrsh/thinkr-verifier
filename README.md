@@ -6,9 +6,8 @@ encrypts each request to that enclave with the Encrypted HTTP Body Protocol
 verify the enclave from a terminal.
 
 The readers are developers and auditors who want to verify the enclave
-themselves, and the sessions that build Thinkr. The provider of the enclave is
-Tinfoil. The verifier uses no code of Tinfoil: it follows the published formats
-and the EHBP specification.
+themselves. The provider of the enclave is Tinfoil. The verifier uses no code
+of Tinfoil: it follows the published formats and the EHBP specification.
 
 ## Verify the enclave from a terminal
 
@@ -151,3 +150,7 @@ reference implementation of EHBP (MIT).
 - The attestation report: the SEV-SNP firmware ABI specification of AMD.
 - The formats of the attestation document, the release, and the certificate:
   docs.tinfoil.sh and the live router, read 23 Oct 2026.
+
+## License
+
+The Apache License 2.0. The full text is in `LICENSE`.
