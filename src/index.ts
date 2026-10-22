@@ -1,0 +1,11 @@
+export { assembleBundle, fetchBundle, parseBundle } from './bundle.js';
+export type { AttestationBundle, BundleTarget } from './bundle.js';
+export { createSealedFetch } from './ehbp/fetch.js';
+export type { SealedFetchOptions } from './ehbp/fetch.js';
+export { EhbpError, VERIFICATION_STEPS, VerificationError } from './errors.js';
+export type { EhbpErrorCode, VerificationStep } from './errors.js';
+export { verifyBundle } from './verify.js';
+export type { Verification, VerifyOptions } from './verify.js';
+export type { VerifiedHardware } from './amd/index.js';
+export { TINFOIL } from './config/tinfoil.js';
+export { SOURCES } from './config/sources.js';
