@@ -1,6 +1,6 @@
 {
   "name": "@thinkr/verifier",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Verifies the enclave of the private lane of Thinkr and encrypts each request to it with EHBP.",
   "license": "Apache-2.0",
   "repository": {

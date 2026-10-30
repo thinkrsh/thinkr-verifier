@@ -96,6 +96,11 @@ each response frame by frame, so a streamed answer reads as it arrives. It sends
 only to the origin of `baseUrl` and of the enclave. A request with no body goes
 out as it is, as EHBP defines.
 
+To send with another tool, encrypt and decrypt apart. `sealRequestBody` encrypts
+a body and returns its bytes, the headers of EHBP to send with them, and the
+secrets of the answer, which stay on your machine. `openResponseBytes` decrypts
+the whole answer with those secrets and its response nonce.
+
 ## Trust roots
 
 This section lists the keys that the verifier trusts. Every other key must

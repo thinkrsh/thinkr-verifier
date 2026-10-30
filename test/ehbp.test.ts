@@ -9,6 +9,7 @@ import { TINFOIL } from '../src/config/tinfoil.js';
 import { createSealedFetch } from '../src/ehbp/fetch.js';
 import { frame } from '../src/ehbp/frames.js';
 import { deriveResponseKeys, frameNonce, parseResponseNonce } from '../src/ehbp/response.js';
+import { openResponseBytes, sealRequestBody } from '../src/ehbp/steps.js';
 import { ehbpSuite } from '../src/ehbp/suite.js';
 import { EhbpError } from '../src/errors.js';
 import { concatBytes, fromHex, toHex } from '../src/lib/bytes.js';
@@ -252,6 +253,63 @@ describe('createSealedFetch', () => {
     await expectEhbpError(
       send('/v1/chat/completions', { method: 'POST', body: '{}' }),
       'INVALID_KEY_CONFIG',
+    );
+  });
+});
+
+describe('sealRequestBody and openResponseBytes', () => {
+  /** Sends what `sealRequestBody` made to the test enclave, as another tool would. */
+  async function roundTrip(frames: string[]): Promise<{
+    enclave: TestEnclave;
+    sealed: Awaited<ReturnType<typeof sealRequestBody>>;
+    response: Response;
+  }> {
+    const enclave = new TestEnclave(keyPair, () => ({ status: 200, frames }));
+    const sealed = await sealRequestBody(publicKeyHex, encoder.encode('{"model":"m"}'));
+    const response = await enclave.fetch(`${BASE_URL}/v1/chat/completions`, {
+      method: 'POST',
+      headers: sealed.headers,
+      body: sealed.body,
+    });
+    return { enclave, sealed, response };
+  }
+
+  it('seals a body that an enclave opens, and opens its whole answer', async () => {
+    const { enclave, sealed, response } = await roundTrip(['{"ans', 'wer":1}']);
+    expect(enclave.exchanges[0]?.plaintext).toBe('{"model":"m"}');
+    const opened = await openResponseBytes(
+      sealed,
+      response.headers.get(EHBP.responseNonceHeader) ?? '',
+      new Uint8Array(await response.arrayBuffer()),
+    );
+    expect(decoder.decode(opened)).toBe('{"answer":1}');
+  });
+
+  it('shows no plain text in the sealed body', async () => {
+    const { sealed } = await roundTrip(['ok']);
+    expect(decoder.decode(sealed.body)).not.toContain('model');
+  });
+
+  it('refuses an answer that was changed, or a nonce of another shape', async () => {
+    const { sealed, response } = await roundTrip(['ok']);
+    const nonce = response.headers.get(EHBP.responseNonceHeader) ?? '';
+    const framed = new Uint8Array(await response.arrayBuffer());
+    const changed = Uint8Array.from(framed);
+    changed[changed.length - 1] = (changed[changed.length - 1] ?? 0) ^ 1;
+    await expectEhbpError(openResponseBytes(sealed, nonce, changed), 'AEAD_DECRYPT_FAILED');
+    await expectEhbpError(openResponseBytes(sealed, 'abcd', framed), 'INVALID_RESPONSE_NONCE');
+  });
+
+  it('opens an answer only with the secrets of its own request', async () => {
+    const { response } = await roundTrip(['ok']);
+    const other = await sealRequestBody(publicKeyHex, encoder.encode('{}'));
+    await expectEhbpError(
+      openResponseBytes(
+        other,
+        response.headers.get(EHBP.responseNonceHeader) ?? '',
+        new Uint8Array(await response.arrayBuffer()),
+      ),
+      'AEAD_DECRYPT_FAILED',
     );
   });
 });
