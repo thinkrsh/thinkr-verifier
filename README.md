@@ -14,25 +14,18 @@ of Tinfoil: it follows the published formats and the EHBP specification.
 This section shows how to run the verification on your own machine. You need
 Node 22.12 or later.
 
-1. Install the packages and build:
+1. To verify the enclave that the app of Thinkr uses, run:
 
    ```sh
-   npm install
-   npm run build
+   npx @thinkr/verifier
    ```
 
-2. To verify the enclave that the app of Thinkr uses, run:
-
-   ```sh
-   node dist/cli.js
-   ```
-
-3. To verify with no service between you and the enclave, name the enclave.
+2. To verify with no service between you and the enclave, name the enclave.
    The tool then fetches the attestation from the enclave, the release from
    GitHub, and the key of the chip from AMD:
 
    ```sh
-   node dist/cli.js --enclave inference.tinfoil.sh
+   npx @thinkr/verifier --enclave inference.tinfoil.sh
    ```
 
 The output on 23 Oct 2026:
@@ -74,8 +67,9 @@ step.
 
 ## Use the library
 
-This section shows how an app verifies the enclave and then sends sealed
-requests. To verify a bundle and send one sealed chat, use:
+This section shows how an app verifies the enclave and then sends encrypted
+requests. Install the package with `npm install @thinkr/verifier`. To verify a
+bundle and send one encrypted chat, use:
 
 ```ts
 import { createSealedFetch, fetchBundle, verifyBundle } from '@thinkr/verifier';
@@ -97,10 +91,10 @@ const response = await sealedFetch('/v1/chat/completions', {
 });
 ```
 
-`createSealedFetch` seals each request body to the attested key and opens each
-response frame by frame, so a streamed answer reads as it arrives. It sends
+`createSealedFetch` encrypts each request body to the attested key and decrypts
+each response frame by frame, so a streamed answer reads as it arrives. It sends
 only to the origin of `baseUrl` and of the enclave. A request with no body goes
-out unsealed, as EHBP defines.
+out as it is, as EHBP defines.
 
 ## Trust roots
 
@@ -127,7 +121,7 @@ This section lists what the verifier does not do yet.
 - A browser cannot fetch the VCEK from AMD, because AMD sends no CORS headers.
   In the browser, the VCEK comes in the bundle, and the chain to the pinned
   root of AMD still verifies it.
-- The sealed request body is built in memory before it is sent. The response
+- The encrypted request body is built in memory before it is sent. The response
   streams.
 
 ## Development
